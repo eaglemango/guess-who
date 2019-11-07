@@ -1,0 +1,15 @@
+digraph G {
+    N0 [shape=diamond, label="Poltorashka is missing?"]
+    N1 [shape=diamond, label="DIHT is missing?"]
+    N3 [shape=diamond, label="No code to check?"]
+    N5 [label="randint(1, 2)"]
+    N6 [label="Ded has a good sleep"]
+    N3 -> N5 [color="#ff7e40", fontcolor="#ff7e40", label="No"]
+    N3 -> N6 [color="#228b22", fontcolor="#228b22", label="Yes"]
+    N4 [label="Ded goes to second dormitory"]
+    N1 -> N3 [color="#ff7e40", fontcolor="#ff7e40", label="No"]
+    N1 -> N4 [color="#228b22", fontcolor="#228b22", label="Yes"]
+    N2 [label="Ded goes to first dormitory"]
+    N0 -> N1 [color="#ff7e40", fontcolor="#ff7e40", label="No"]
+    N0 -> N2 [color="#228b22", fontcolor="#228b22", label="Yes"]
+}
