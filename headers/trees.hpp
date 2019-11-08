@@ -7,6 +7,7 @@
 
 #include <cassert>
 #include <cstdio>
+#include <cstring>
 
 #include "constants.hpp"
 #include "dynamic_buffer.hpp"
@@ -125,6 +126,11 @@ private:
     size_t AskQuestion(size_t node_number) const;
     bool Guess(size_t node_number) const;
     void Train(size_t node_number);
+
+    void FestivalAskQuestion(size_t node_number) const;
+    void FestivalGuess(size_t node_number) const;
+
+    void FestivalSay(char* words) const;
 };
 
 GuessTree::GuessTree() {
@@ -145,8 +151,10 @@ void GuessTree::AskQuestions() {
     }
 }
 
+
+
 size_t GuessTree::AskQuestion(size_t node_number) const {
-    printf("%s\n", GetNode(node_number).value);
+    FestivalAskQuestion(node_number);
 
     char response = fgetc(stdin);
     while (response == '\n') {
@@ -165,6 +173,7 @@ size_t GuessTree::AskQuestion(size_t node_number) const {
 }
 
 bool GuessTree::Guess(size_t node_number) const {
+    FestivalGuess(node_number);
     printf("Is this %s?\n", GetNode(node_number).value);
 
     char response = fgetc(stdin);
@@ -173,17 +182,18 @@ bool GuessTree::Guess(size_t node_number) const {
     }
 
     if (response == RESPONSE_YES) {
+        FestivalSay(WIN_WORDS);
         printf("I won again!\n");
 
         return true;
 
     } else if (response == REPONSE_NO) {
+        FestivalSay(LOSE_WORDS);
         printf("Oh, that's your day...\n");
 
         return false;
 
     } else {
-        printf("Symbol: %d", (int)response);
         assert(false);
     }
 }
@@ -204,6 +214,7 @@ void ReadString(DynamicBuffer<char>& s) {
 void GuessTree::Train(size_t node_number) {
     DynamicBuffer<char> new_answer_buffer;
 
+    FestivalSay(WHO_WORDS);
     printf("Who it was?\n");
     ReadString(new_answer_buffer);
 
@@ -233,4 +244,40 @@ void GuessTree::Train(size_t node_number) {
     
     UpdateNode(node_number, new_question);
 }
+
+void GuessTree::FestivalAskQuestion(size_t node_number) const {
+    char* question_string = (char*)calloc(1 + strlen(GetNode(node_number).value), sizeof(char));
+    sprintf(question_string, "%s\n", GetNode(node_number).value);
+
+    char* command_string = (char*)calloc(24 + strlen(question_string), sizeof(char));
+    sprintf(command_string, "echo \"%s\" | festival --tts", question_string);
+
+    system(command_string);
+
+    free(command_string);
+    free(question_string);
+}
+
+void GuessTree::FestivalGuess(size_t node_number) const {
+    char* answer_string = (char*)calloc(1 + strlen(GetNode(node_number).value), sizeof(char));
+    sprintf(answer_string, "%s\n", GetNode(node_number).value);
+
+    char* command_string = (char*)calloc(32 + strlen(answer_string), sizeof(char));
+    sprintf(command_string, "echo \"Is this %s\" | festival --tts", answer_string);
+
+    system(command_string);
+
+    free(command_string);
+    free(answer_string);
+}
+
+void GuessTree::FestivalSay(char* words) const {
+    char* command_string = (char*)calloc(24 + strlen(words), sizeof(char));
+    sprintf(command_string, "echo \"%s\" | festival --tts", words);
+
+    system(command_string);
+
+    free(command_string);
+}
+
 #endif
