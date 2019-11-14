@@ -17,5 +17,10 @@ static const char OPENING_BRACE[] = "{";
 static const char CLOSING_BRACE[] = "}";
 
 static const char EMPTY_STRING[] = "";
+static char PLACEHOLDER[] = "Nobody";
+
+static const char MODE_PLAY[] = "play";
+static const char MODE_WHOIS[] = "whois";
+static const char MODE_COMPARE[] = "compare";
 
 #endif

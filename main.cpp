@@ -25,7 +25,15 @@ int main(int argc, char* argv[]) {
             } 
 
         } else if (!strcasecmp(argv[1], MODE_WHOIS)) {
-            
+            bool found = false;
+            guesser.WhoIs(0, argv[3], found);
+
+            if (found) {
+                printf("\nThat's all, that I have for %s\n", argv[3]);
+
+            } else {
+                printf("I know nothing about %s, sorry\n", argv[3]);
+            }
 
         } else if (!strcasecmp(argv[1], MODE_COMPARE)) {
 

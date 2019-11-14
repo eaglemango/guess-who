@@ -135,6 +135,8 @@ public:
 
     void AskQuestions();
 
+    void WhoIs(size_t curr_node, const char* node_value, bool& found);
+
 private:
     size_t AskQuestion(size_t node_number) const;
     bool Guess(size_t node_number) const;
@@ -157,7 +159,7 @@ GuessTree::GuessTree(const char* file_path = EMPTY_STRING) {
         Load(file_path);
 
     } else {
-        AddNode(0, "Nobody");
+        AddNode(0, PLACEHOLDER);
     }
 }
 
@@ -176,6 +178,32 @@ void GuessTree::AskQuestions() {
 
     if (!guesser_won) {
         Train(curr_node_number);
+    }
+}
+
+void GuessTree::WhoIs(size_t curr_node, const char* node_value, bool& found) {
+    if (!found) {
+        if (IsLeaf(curr_node)) {
+            if (!strcmp(GetNode(curr_node).value, node_value)) {
+                found = true;
+
+                while (curr_node != 0) {
+                    if (GetNode(GetNode(curr_node).parent).right_child == curr_node) {
+                        curr_node = GetNode(curr_node).parent;
+
+                        printf("%s - YES!\n", GetNode(curr_node).value);
+
+                    } else {
+                        curr_node = GetNode(curr_node).parent;
+                    }
+                }
+            }
+
+        } else {
+            WhoIs(GetNode(curr_node).left_child, node_value, found);
+            WhoIs(GetNode(curr_node).right_child, node_value, found);
+        }
+
     }
 }
 
