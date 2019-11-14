@@ -1,3 +1,7 @@
+/*!
+    @file
+    @brief .dot files processor
+*/
 #ifndef DOTTER_HEADER
 #define DOTTER_HEADER
 

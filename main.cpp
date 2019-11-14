@@ -1,10 +1,10 @@
 #include "dotter.hpp"
 
 int main(int argc, char* argv[]) {
-    GuessTree guesser;
+    GuessTree guesser(argv[1]);
 
     int i = 0;
-    while (i < 5) {
+    while (i < 3) {
         printf("===== New game =====\n");
         guesser.AskQuestions();
         printf("=====          =====\n");

@@ -6,29 +6,34 @@
 #define TREES_HEADER
 
 #include <cassert>
+#include <cctype>
 #include <cstdio>
 #include <cstring>
 
 #include "constants.hpp"
 #include "dynamic_buffer.hpp"
+#include "utils.hpp"
 
 template <class T>
 struct BinaryTreeNode {
     BinaryTreeNode() {
         value = T();
 
+        depth = -1;
         parent = 0;
         left_child = 0;
         right_child = 0;
     }
 
     BinaryTreeNode(size_t parent, T value) : parent(parent), value(value) {
+        depth = -1;
         left_child = 0;
         right_child = 0;
     }
 
     T value;
 
+    size_t depth;
     size_t parent;
     size_t left_child;
     size_t right_child;
@@ -43,7 +48,7 @@ public:
     BinaryTree(const BinaryTree& binary_tree) = default;
     BinaryTree& operator=(const BinaryTree& binary_tree) = default;
 
-    void AddNode(size_t parent, const T& value);
+    size_t AddNode(size_t parent, const T& value);
 
     void UpdateNode(size_t node_number, const T& new_value);
 
@@ -54,13 +59,19 @@ public:
     bool IsLeaf(size_t node_number) const;
     bool IsLeaf(const BinaryTreeNode<T>& node) const;
 
+    bool IsFree(size_t node_number) {
+        return buffer[node_number].left_child == 0 ||
+               buffer[node_number].right_child == 0;
+    }
+
 private:
     DynamicBuffer<BinaryTreeNode<T>> buffer;
 };
 
 template <class T>
-void BinaryTree<T>::AddNode(size_t parent, const T& value) {
+size_t BinaryTree<T>::AddNode(size_t parent, const T& value) {
     BinaryTreeNode<char*> new_node = BinaryTreeNode<char*>(parent, value);
+    new_node.depth = buffer[parent].depth + 1;
     buffer.Add(new_node);
 
     if (buffer[parent].left_child == 0) {
@@ -72,6 +83,8 @@ void BinaryTree<T>::AddNode(size_t parent, const T& value) {
     } else {
         assert(false);
     }
+
+    return buffer.GetCurrSize() - 1;
 }
 
 template <class T>
@@ -114,9 +127,9 @@ bool BinaryTree<T>::IsLeaf(const BinaryTreeNode<T>& node) const {
 
 class GuessTree : public BinaryTree<char*> {
 public:
-    GuessTree();
+    GuessTree(const char* file_path);
 
-    ~GuessTree() = default;
+    ~GuessTree();
     GuessTree(const GuessTree& guess_tree) = default;
     GuessTree& operator=(const GuessTree& guess_tree) = default;
 
@@ -127,14 +140,29 @@ private:
     bool Guess(size_t node_number) const;
     void Train(size_t node_number);
 
+    void Load(const char* file_path);
+    void Save(const char* file_path);
+
+    void SafeWrite(const char* s, FILE* file);
+    void WriteNode(size_t node_number, FILE* file);
+
     void FestivalAskQuestion(size_t node_number) const;
     void FestivalGuess(size_t node_number) const;
 
     void FestivalSay(char* words) const;
 };
 
-GuessTree::GuessTree() {
-    AddNode(0, "Nobody");
+GuessTree::GuessTree(const char* file_path = EMPTY_STRING) {
+    if (strlen(file_path)) {
+        Load(file_path);
+
+    } else {
+        AddNode(0, "Nobody");
+    }
+}
+
+GuessTree::~GuessTree() {
+    Save("kek.gg");
 }
 
 void GuessTree::AskQuestions() {
@@ -151,10 +179,9 @@ void GuessTree::AskQuestions() {
     }
 }
 
-
-
 size_t GuessTree::AskQuestion(size_t node_number) const {
-    FestivalAskQuestion(node_number);
+    // FestivalAskQuestion(node_number);
+    printf("%s\n", GetNode(node_number).value);
 
     char response = fgetc(stdin);
     while (response == '\n') {
@@ -173,7 +200,7 @@ size_t GuessTree::AskQuestion(size_t node_number) const {
 }
 
 bool GuessTree::Guess(size_t node_number) const {
-    FestivalGuess(node_number);
+    // FestivalGuess(node_number);
     printf("Is this %s?\n", GetNode(node_number).value);
 
     char response = fgetc(stdin);
@@ -182,13 +209,13 @@ bool GuessTree::Guess(size_t node_number) const {
     }
 
     if (response == RESPONSE_YES) {
-        FestivalSay(WIN_WORDS);
+        // FestivalSay(WIN_WORDS);
         printf("I won again!\n");
 
         return true;
 
     } else if (response == REPONSE_NO) {
-        FestivalSay(LOSE_WORDS);
+        // FestivalSay(LOSE_WORDS);
         printf("Oh, that's your day...\n");
 
         return false;
@@ -214,16 +241,12 @@ void ReadString(DynamicBuffer<char>& s) {
 void GuessTree::Train(size_t node_number) {
     DynamicBuffer<char> new_answer_buffer;
 
-    FestivalSay(WHO_WORDS);
+    // FestivalSay(WHO_WORDS);
     printf("Who it was?\n");
     ReadString(new_answer_buffer);
 
-    char* new_answer = (char*)calloc(new_answer_buffer.GetCurrSize(), sizeof(char));
-    assert(new_answer);
-
-    for (size_t i = 0; i < new_answer_buffer.GetCurrSize(); ++i) {
-        new_answer[i] = new_answer_buffer[i];
-    }
+    char* new_answer = nullptr;
+    new_answer_buffer.CopyToArray(&new_answer);
 
     DynamicBuffer<char> new_question_buffer;
 
@@ -232,17 +255,118 @@ void GuessTree::Train(size_t node_number) {
            new_answer);
     ReadString(new_question_buffer);
 
-    char* new_question = (char*)calloc(new_question_buffer.GetCurrSize(), sizeof(char));
-    assert(new_question);
-    
-    for (size_t i = 0; i < new_question_buffer.GetCurrSize(); ++i) {
-        new_question[i] = new_question_buffer[i];
-    }
+    char* new_question = nullptr;
+    new_question_buffer.CopyToArray(&new_question);
 
     AddNode(node_number, GetNode(node_number).value); // new left node
     AddNode(node_number, new_answer); // new right node
     
     UpdateNode(node_number, new_question);
+}
+
+void GuessTree::Load(const char* file_path) {
+    FILE* file = fopen(file_path, "r");
+    assert(file);
+
+    fseek(file, 0, SEEK_END);
+    size_t size = ftell(file);
+    fseek(file, 0, SEEK_SET);
+
+    char* code = (char*) calloc(size, sizeof(char));
+    assert(code);
+
+    int read_count = fread(code, sizeof(char), size, file);
+    assert(read_count == size);
+
+    int close_result = fclose(file);
+    assert(close_result != EOF);
+
+    // Processing
+    size_t last_node = 0;
+    size_t curr_parent = 0;
+    char* token = strtok(code, DELIMITER);
+    while (token) {
+        while (isspace(*token)) {
+            ++token;
+        }
+
+        if (*token == '\0') {
+            token = strtok(nullptr, DELIMITER);
+
+            continue;
+        }
+
+        if (*token == '{') { // Curr node becomes a parent
+            curr_parent = last_node;
+
+        } else if (*token == '}') { // Return control to parent
+            curr_parent = GetNode(curr_parent).parent;
+
+        } else { // Just add string to current parent
+            while (!IsFree(curr_parent)) {
+                curr_parent = GetNode(curr_parent).parent;
+            }
+
+            last_node = AddNode(curr_parent, token);
+        }
+
+        token = strtok(nullptr, DELIMITER);
+    }
+}
+
+void GuessTree::SafeWrite(const char* s, FILE* file) {
+    int write_count = fwrite(s, sizeof(char), strlen(s), file);
+    assert(write_count == strlen(s));
+}
+
+void GuessTree::WriteNode(size_t node_number, FILE* file) {
+    char* spaces = GenerateSpaces(GetNode(node_number).depth * 2);
+    assert(spaces);
+
+    if (IsLeaf(node_number)) {
+        SafeWrite(spaces, file);
+        SafeWrite(GetNode(node_number).value, file);
+        SafeWrite(DELIMITER, file);
+
+        SafeWrite(spaces, file);
+        SafeWrite(OPENING_BRACE, file);
+        SafeWrite(DELIMITER, file);
+
+    } else {
+        SafeWrite(spaces, file);
+        SafeWrite(GetNode(node_number).value, file);
+        SafeWrite(DELIMITER, file);
+
+        SafeWrite(spaces, file);
+        SafeWrite(OPENING_BRACE, file);
+        SafeWrite(DELIMITER, file);
+
+        WriteNode(GetNode(node_number).left_child, file);
+        
+        SafeWrite(spaces, file);
+        SafeWrite(CLOSING_BRACE, file);
+        SafeWrite(DELIMITER, file);
+
+        WriteNode(GetNode(node_number).right_child, file);
+    }
+
+    free(spaces);
+}
+
+void GuessTree::Save(const char* file_path) {
+    FILE* file = fopen(file_path, "w");
+    assert(file);
+
+    SafeWrite(OPENING_BRACE, file);
+    SafeWrite(DELIMITER, file);
+
+    WriteNode(0, file);
+
+    SafeWrite(CLOSING_BRACE, file);
+    SafeWrite(DELIMITER, file);
+
+    int close_result = fclose(file);
+    assert(close_result != EOF);
 }
 
 void GuessTree::FestivalAskQuestion(size_t node_number) const {
