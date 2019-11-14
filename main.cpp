@@ -1,15 +1,39 @@
 #include "dotter.hpp"
 
 int main(int argc, char* argv[]) {
-    GuessTree guesser(argv[1]);
+    GuessTree guesser;
 
-    int i = 0;
-    while (i < 3) {
-        printf("===== New game =====\n");
-        guesser.AskQuestions();
-        printf("=====          =====\n");
+    if (argc < 2) {
+        printf("Invalid launch\n");
 
-        ++i;
+        return 1;
+    } else {
+        if (argc >= 3) {
+            guesser = GuessTree(argv[2]);
+        }
+
+        if (!strcasecmp(argv[1], MODE_PLAY)) {
+            bool active_game = true;
+            while (active_game) {
+                printf("===== New game =====\n");
+                guesser.AskQuestions();
+                printf("\nEnter 1 for new round, 0 to exit: ");
+                int response = 0;
+                scanf("%d", &response);
+
+                active_game = static_cast<bool>(response);
+            } 
+
+        } else if (!strcasecmp(argv[1], MODE_WHOIS)) {
+            
+
+        } else if (!strcasecmp(argv[1], MODE_COMPARE)) {
+
+        } else {
+            printf("Invalid mode\n");
+
+            return 2;
+        }
     }
 
     Dotter dotter;
