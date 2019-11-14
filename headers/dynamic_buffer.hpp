@@ -35,6 +35,8 @@ public:
 
     size_t GetCurrSize() const;
 
+    void CopyToArray(T** array);
+
 private:
     void Increase();
 
@@ -133,6 +135,13 @@ void DynamicBuffer<T>::Update(size_t i, T value) {
 template <class T>
 size_t DynamicBuffer<T>::GetCurrSize() const {
     return curr_size;
+}
+
+template <class T>
+void DynamicBuffer<T>::CopyToArray(T** array) {
+    *array = (T*)calloc(curr_size, sizeof(T));
+
+    *array = (T*)memcpy(*array, buffer, curr_size);
 }
 
 /*!
